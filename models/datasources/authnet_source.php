@@ -179,6 +179,11 @@ class AuthnetSource extends DataSource {
 				}
 			}
 			
+			// Strip out any | in the value
+			if ($key != 'delim_char') {
+				$value = str_replace('|', '', $value);
+			}
+			
 			$return["x_{$key}"] = $value;
 		}
 		
