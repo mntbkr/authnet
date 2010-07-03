@@ -144,7 +144,7 @@ class AuthnetSource extends DataSource {
  *
  * @param config an array of configuratives to be passed to the constructor to overwrite the default
  */
-	public function __construct($config) {
+	public function __construct($config = array()) {
 		parent::__construct($config);
 		$this->Http = new HttpSocket();
 	}
@@ -162,8 +162,7 @@ class AuthnetSource extends DataSource {
 	public function create(&$Model, $fields = array(), $values = array()) {
 		$data = array_combine($fields, $values);
 		$data = Set::merge($this->_translateConfig($this->config), $data);
-		$result = $this->__request($Model, $data);
-		return $result;
+		return $this->__request($Model, $data);
 	}
 	
 /**
@@ -231,6 +230,8 @@ class AuthnetSource extends DataSource {
 			return false;
 		}
 		
+		unset($data['datasource']);
+		
 		$encapsulators = array('line_item','tax','freight','duty');
 		$return = array();
 		
@@ -241,9 +242,6 @@ class AuthnetSource extends DataSource {
 		}
 		
 		foreach ($data as $key => $value) {
-			if (empty($value)) {
-				continue;
-			}
 			if (in_array($key, $encapsulators)) {
 				if (is_array($value)) {
 					$value = implode('<|>', $value);
@@ -299,12 +297,14 @@ class AuthnetSource extends DataSource {
 			if (!empty($response['AuthorizationCode'])) {
 				$data[$Model->alias]['auth_code'] = $response['AuthorizationCode'];
 			}
+			
 			// Merge the response back into the model
 			$data = Set::merge($Model->data, $data);
 			$Model->set($data);
 			$result = true;
 		} else {
 			// Transaction was declined, errored, or was held for review
+			
 			$subcodesToFields = array(
 				'5' => 'amount',
 				'6' => 'card_num',
@@ -388,7 +388,7 @@ class AuthnetSource extends DataSource {
 		} else {
 			$url = 'https://test.authorize.net/gateway/transact.dll';
 		}
-		
+
 		$data = $this->__prepareDataForPost($data);
 		
 		debug($data);
