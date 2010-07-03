@@ -196,23 +196,36 @@ class AuthnetSource extends DataSource {
  * @param array $response
  * @return array
  */
-	private function __parseResponse(&$Model, $response) {
+	private function __parseResponse(&$Model, $responseString) {
 		$result = false;
-		if (!empty($response)) {
-			preg_match("/Content-Length: ([0-9]*)/", $response, $contentLength);
-			if (!empty($contentLength[1])) {
-				$response = explode($this->config['response_delimiter'], substr($response, $contentLength[1]*-1));
-			}
+		if (!empty($responseString)) {
+			$responseArray = explode($this->_apiSettings['delim_char'], $responseString);
 		}
-		
-		if ($response[0] == 1) {
-			if (!empty($response[6])) {
-				$Model->setInsertID($response[6]);
-				$Model->id = $response[6];
-				$data[$Model->alias]['transaction_id'] = $response[6];
+
+		// Apply key names to the transaction response
+		$response = array(
+			'ResponseCode' 			=> $responseArray[0],
+			'ResponseSubcode'		=> $responseArray[1],
+			'ResponseReasonCode'	=> $responseArray[2],
+			'ResponseReasonText'	=> $responseArray[3],
+			'AuthorizationCode'		=> $responseArray[4],
+			'AVS Response'			=> $responseArray[5],
+			'TransactionId'			=> $responseArray[6],
+		);
+
+		if ($response['ResponseCode'] == 1) {
+			// Transaction Approved
+			
+			// Set a transaction ID if received
+			if (!empty($response['TransactionId'])) {
+				$Model->setInsertID($response['TransactionId']);
+				$Model->id = $response['TransactionId'];
+				$data[$Model->alias]['trans_id'] = $response['TransactionId'];
 			}
-			if (!empty($response[4])) {
-				$data[$Model->alias]['authorization_code'] = $response[4];
+			
+			// Set an authorization code if received
+			if (!empty($response['AuthorizationCode'])) {
+				$data[$Model->alias]['auth_code'] = $response['AuthorizationCode'];
 			}
 			$data = Set::merge($Model->data, $data);
 			$Model->set($data);
@@ -250,26 +263,26 @@ class AuthnetSource extends DataSource {
 				'317' => 'exp_date'				
 			);
 			
-			if (array_key_exists($response[2], $subcodesToFields)) {
-				if ($response[2] == 33) {
-					if (stristr($response[3], 'expiration date')) {
-						$field = 'expiration';
-					} elseif (stristr($response[3], 'transaction ID')) {
-						$field = 'transaction_id';
+			if (array_key_exists($response['ResponseReasonCode'], $subcodesToFields)) {
+				if ($response['ResponseReasonCode'] == 33) {
+					if (stristr($response['ResponseReasonText'], 'expiration date')) {
+						$field = 'exp_date';
+					} elseif (stristr($response['ResponseReasonText'], 'transaction ID')) {
+						$field = 'trans_id';
 					} else {
-						$field = 'card_number';
+						$field = 'card_num';
 					}
 				} else {
-					$field = $subcodesToFields[$response[2]];
+					$field = $subcodesToFields[$response['ResponseReasonCode']];
 				}
-				$Model->invalidate($field, $response[3]);
+				$Model->invalidate($field, $response['ResponseReasonText'] . ' (error code: ' . $response['ResponseReasonCode'] . ')');
 			} else {
 				$responses = array(
 					'2' => 'Declined',
 					'3' => 'Error',
 					'4' => 'Held for review'
 				);
-				$Model->invalidate('declined', array($responses[$response[0]], $response[2], $response[3]));
+				$Model->invalidate('declined', array($responses[$response['ResponseCode']], $response['ResponseReasonCode'], $response['ResponseReasonText'] . ' (error code: ' . $response['ResponseReasonCode'] . ')'));
 			}
 		}
 		return $result;
