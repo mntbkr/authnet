@@ -184,6 +184,7 @@ class AuthnetSource extends DataSource {
 				$value = str_replace('|', '', $value);
 			}
 			
+			//prefix the key with x_
 			$return["x_{$key}"] = $value;
 		}
 		
@@ -227,10 +228,12 @@ class AuthnetSource extends DataSource {
 			if (!empty($response['AuthorizationCode'])) {
 				$data[$Model->alias]['auth_code'] = $response['AuthorizationCode'];
 			}
+			// Merge the response back into the model
 			$data = Set::merge($Model->data, $data);
 			$Model->set($data);
 			$result = true;
 		} else {
+			// Transaction was declined, errored, or was held for review
 			$subcodesToFields = array(
 				'5' => 'amount',
 				'6' => 'card_num',
