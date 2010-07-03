@@ -22,20 +22,28 @@ class AuthnetSource extends DataSource {
  * @access public
  */	
 	public $_baseConfig = array(
-		"server" => 'test',
-		"test_request" => false,
-		"login" => NULL,
-		"key" => NULL,
-		"email" => false,
-		
-		"duplicate_window" => "120",
-		"payment_method" => "CC",
-		"default_type" => "AUTH_CAPTURE",
-		'delimit_response' => true,
-		"response_delimiter" => "|",
-		"response_encapsulator" => "",
-		'api_version' => '3.1',
+		'server' => 'test',
+		'test_request' => false,
+		'login' => NULL,
+		'key' => NULL,
+		'default_type' => 'AUTH_CAPTURE',
 		'payment_method' => 'CC',
+		'email_customer' => false,
+		'duplicate_window' => '120',
+	);
+
+/**
+ * API Settings that are specific to this datasource. These can't be overridden
+ * by configuration or data input.
+ * 
+ * @var array
+ * @access protected
+ */
+	protected $_apiSettings = array(
+		'version' => '3.1',
+		'delim_data' => true,
+		'delim_char' => '|',
+		'encap_char' => '',
 		'relay_response' => false
 	);
 	
@@ -44,22 +52,11 @@ class AuthnetSource extends DataSource {
  *
  * @var array
  */
-	public $_translation = array(
-		'card_num' => 'card_number',
-		'exp_date' => 'expiration',
+	public $_configTranslation = array(
 		'type' => 'default_type',
-		'trans_id' => 'transaction_id',
 		'login' => 'login',
 		'tran_key' => 'key',
-		'test_request' => 'test_request',
-		'duplicate_window' => 'duplicate_window',
-		'delim_data' => 'delimit_response',
-		'delim_char' => 'response_delimiter',
-		'encap_char' => 'response_encapsulator',
-		'relay_response' => 'relay_response',
-		'version' => 'api_version',
 		'method' => 'payment_method',
-		'email_customer' => 'email'
 	);
 	
 	//public $cacheSources = false;
@@ -93,7 +90,7 @@ class AuthnetSource extends DataSource {
  */
 	public function create(&$Model, $fields = array(), $values = array()) {
 		$data = array_combine($fields, $values);
-		$data = Set::merge($this->config, $data);
+		$data = Set::merge($this->_translateConfig($this->config), $data);
 		$result = $this->__request($Model, $data);
 		return $result;
 	}
@@ -104,12 +101,12 @@ class AuthnetSource extends DataSource {
 	public function update(&$Model, $fields = null, $values = null) {
 		$data = array_combine($fields, $values);
 		if ((float)$data['amount'] >= 0) {
-			$data = Set::merge($data, array('default_type' => 'PRIOR_AUTH_CAPTURE'));
+			$data = Set::merge($data, array('transaction_type' => 'PRIOR_AUTH_CAPTURE'));
 		} else {
 			// if a negative value is passed, assuming refund
-			$data = Set::merge($data, array('default_type' => 'CREDIT'));
+			$data = Set::merge($data, array('transaction_type' => 'CREDIT'));
 		}
-		$data = Set::merge($this->config, $data);
+		$data = Set::merge($this->_translateConfig($this->config), $data);
 		return $this->__request($Model, $data);
 	}
 	
@@ -124,7 +121,7 @@ class AuthnetSource extends DataSource {
 			'transaction_id' => $id,
 			'default_type' => 'VOID'
 		);		
-		$data = Set::merge($this->config, $data);
+		$data = Set::merge($this->_translateConfig($this->config), $data);
 		return $this->__request($Model, $data);	
 	}
 	
@@ -133,6 +130,24 @@ class AuthnetSource extends DataSource {
  */
 	public function listSources() {}
 	
+/**
+ * Translate the config option keys into keys Authorize.net expects in posted data.
+ */
+	protected function _translateConfig($data = null) {
+		$_translator = array_combine(array_values($this->_configTranslation), array_keys($this->_configTranslation));
+		$returnData = array();
+		
+		foreach ($data as $key => $value) {
+			if (in_array($key, $this->_configTranslation)) {
+				$key = $_translator[$key];
+			}
+			
+			$returnData[$key] = $value;
+		}
+		
+		return $returnData;
+	}
+
 /**
  * Translate keys to a value Authorize.net expects in posted data, as well as encapsulating where relevant. Returns false
  * if no data is passed, otherwise array of translated data.
@@ -145,10 +160,14 @@ class AuthnetSource extends DataSource {
 			return false;
 		}
 		
-		$encapsulators = array('line_items','taxes','freight','duty');
+		$encapsulators = array('line_item','tax','freight','duty');
 		$return = array();
 		
-		$_translator = array_combine(array_values($this->_translation), array_keys($this->_translation));
+		// Override default tranasction type
+		if (!empty($data['transaction_type'])) {
+			$data['type'] = $data['transaction_type'];
+			unset($data['transaction_type']);
+		}
 		
 		foreach ($data as $key => $value) {
 			if (empty($value)) {
@@ -160,10 +179,6 @@ class AuthnetSource extends DataSource {
 				}
 			}
 			
-			if (in_array($key, $this->_translation)) {
-				$key = $_translator[$key];
-			}
-						
 			$return["x_{$key}"] = $value;
 		}
 		
@@ -200,34 +215,34 @@ class AuthnetSource extends DataSource {
 		} else {
 			$subcodesToFields = array(
 				'5' => 'amount',
-				'6' => 'card_number',
-				'7' => 'expiration',
-				'8' => 'expiration',
-				'15' => 'transaction_id',
-				'16' => 'transaction_id',
-				'17' => 'card_number',
-				'27' => 'billing_street',
-				'28' => 'card_number',
+				'6' => 'card_num',
+				'7' => 'exp_date',
+				'8' => 'exp_date',
+				'15' => 'trans_id',
+				'16' => 'trans_id',
+				'17' => 'card_num',
+				'27' => 'address',
+				'28' => 'card_num',
 				'33' => 'VARIED',
-				'37' => 'card_number',
+				'37' => 'card_num',
 				'47' => 'amount',
 				'48' => 'amount',
 				'49' => 'amount',
-				'50' => 'transaction_id',
+				'50' => 'trans_id',
 				'51' => 'amount',
-				'54' => 'transaction_id',
+				'54' => 'trans_id',
 				'55' => 'amount',
-				'72' => 'authorization_code',
+				'72' => 'auth_code',
 				'74' => 'duty',
 				'75' => 'freight',
-				'76' => 'taxes',
-				'127' => 'billing_street',
-				'243' => 'recurring',
-				//'310' => 'transaction_id',
-				//'311' => 'transaction_id',
-				'315' => 'card_number',
-				'316' => 'expiration',
-				'317' => 'expiration'				
+				'76' => 'tax',
+				'127' => 'address',
+				'243' => 'recurring_billing',
+				//'310' => 'trans_id',
+				//'311' => 'trans_id',
+				'315' => 'card_num',
+				'316' => 'exp_date',
+				'317' => 'exp_date'				
 			);
 			
 			if (array_key_exists($response[2], $subcodesToFields)) {
@@ -266,6 +281,8 @@ class AuthnetSource extends DataSource {
 		if (empty($data)) {
 			return false;
 		}
+		
+		$data = Set::merge($data, $this->_apiSettings);
 		
 		if (!empty($data['server'])) {
 			$server = $data['server'];
