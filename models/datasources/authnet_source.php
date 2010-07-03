@@ -5,18 +5,21 @@ App::import('Core', 'HttpSocket');
 class AuthnetSource extends DataSource {
 
 /**
- * 
  * The description of this data source
-	 * 
+ * 
  * @var string
+ * @access public
  */
 	public $description = 'Authorize.net DataSource';
 	
 /**
- * 
  * Default configuration
  * 
+ * note: Set to public because DataSource::_baseConfig is public in CakePHP 1.3.
+ * In CakePHP 2.0, this will be set to protected
+ * 
  * @var array
+ * @access public
  */	
 	public $_baseConfig = array(
 		"server" => 'test',
@@ -37,7 +40,6 @@ class AuthnetSource extends DataSource {
 	);
 	
 /**
- *
  * Translation for Authnet POST data keys from default config keys
  *
  * @var array
@@ -63,7 +65,6 @@ class AuthnetSource extends DataSource {
 	//public $cacheSources = false;
 	
 /**
- *
  * HttpSocket object
  *
  * @var object
@@ -71,33 +72,25 @@ class AuthnetSource extends DataSource {
 	public $Http;
 	
 /**
- *
  * Set configuration and establish HttpSocket with appropriate test/production url.
  *
  * @param config an array of configuratives to be passed to the constructor to overwrite the default
  */
-
 	public function __construct($config) {
 		parent::__construct($config);
 		$this->Http = new HttpSocket();
 	}
 	
 /**
- * 
- * Not currently possible to read data posted authorize.net. Method not implemented.
- *
+ * Not currently possible to read data from authorize.net. Method not implemented.
  */
-
 	public function read(&$Model, $queryData = array()) {
 		return false;
 	}
 	
 /**
- *
  * Create a new single or ARB transaction
- *
  */
-
 	public function create(&$Model, $fields = array(), $values = array()) {
 		$data = array_combine($fields, $values);
 		$data = Set::merge($this->config, $data);
@@ -106,10 +99,8 @@ class AuthnetSource extends DataSource {
 	}
 	
 /**
-*
-* Capture a previously authorized transaction
-*
-*/
+ * Capture a previously authorized transaction
+ */
 	public function update(&$Model, $fields = null, $values = null) {
 		$data = array_combine($fields, $values);
 		if ((float)$data['amount'] >= 0) {
@@ -123,9 +114,7 @@ class AuthnetSource extends DataSource {
 	}
 	
 /**
- *
  * Void an authorize.net transaction
- *
  */
 	public function delete(&$Model, $id = null) {
 		if (empty($id)) {
@@ -140,21 +129,17 @@ class AuthnetSource extends DataSource {
 	}
 	
 /**
-*
-* Unsupported methods other CakePHP model and related classes require.
-*
-*/
+ * Unsupported methods other CakePHP model and related classes require.
+ */
 	public function listSources() {}
 	
 /**
- *
  * Translate keys to a value Authorize.net expects in posted data, as well as encapsulating where relevant. Returns false
  * if no data is passed, otherwise array of translated data.
  *
  * @param array $data
  * @return mixed
  */
-
 	private function __prepareDataForPost($data = null) {
 		if (empty($data)) {
 			return false;
@@ -186,13 +171,11 @@ class AuthnetSource extends DataSource {
 	}
 
 /**
-*
-* Parse the response data from a post to authorize.net
-*
-* @param array $response
-* @return array
-*/
-
+ * Parse the response data from a post to authorize.net
+ *
+ * @param array $response
+ * @return array
+ */
 	private function __parseResponse(&$Model, $response) {
 		$result = false;
 		if (!empty($response)) {
@@ -273,7 +256,6 @@ class AuthnetSource extends DataSource {
 	}
 
 /**
- *
  * Post data to authorize.net. Returns false if there is an error, 
  * or an array of the parsed response from authorize.net if valid
  *
@@ -281,7 +263,6 @@ class AuthnetSource extends DataSource {
  * @return mixed
  */
 	private function __request(&$Model, $data) {
-		
 		if (empty($data)) {
 			return false;
 		}
