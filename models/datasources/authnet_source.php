@@ -58,7 +58,78 @@ class AuthnetSource extends DataSource {
 		'tran_key' => 'key',
 		'method' => 'payment_method',
 	);
+
+	protected $_schema = array(
+		'authnet_transactions' => array(
+			// Transaction Information
+			'transaction_type' => array('type' => 'text', 'null' => true, 'default' => NULL),
+			'method' => array('type' => 'text', 'null' => true, 'default' => NULL),
+			'recurring_billing' => array('type' => 'boolean', 'null' => false, 'default' => 0), // not an ARB setting
+			'amount' => array('type' => 'float', 'null' => false, 'default' => 0),
+			'trans_id' => array('type' => 'string', 'length' => 255, 'null' => true, 'default' => NULL),
+			'auth_code' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'test_request' => array('type' => 'boolean', 'null' => true, 'default' => NULL),
+			'duplicate_window' => array('type' => 'boolean', 'null' => true, 'default' => NULL),
+		
+			// Credit Card Information
+			'card_num' => array('type' => 'string', 'length' => '16', 'null' => false, 'default' => NULL),
+			'exp_date' => array('type' => 'string', 'length' => 6, 'null' => false, 'default' => NULL),
+			'card_code' => array('type' => 'string', 'length' => 4, 'null' => true, 'default' => NULL),
+		
+			// E-Check Information
+			'bank_aba_code' => array('type' => 'string', 'length' => 9, 'null' => false, 'default' => NULL),
+			'bank_acct_num' => array('type' => 'string', 'length' => 20, 'null' => false, 'default' => NULL),
+			'bank_acct_type' => array('type' => 'string', 'length' => 20, 'null' => true, 'default' => NULL),
+			'bank_name' => array('type' => 'string', 'length' => 50, 'null' => true, 'default' => NULL),
+			'bank_acct_name' => array('type' => 'string', 'length' => 50, 'null' => true, 'default' => NULL),
+			'echeck_type' => array('type' => 'string', 'length' => 3, 'null' => true, 'default' => NULL),
+			'bank_check_number' => array('type' => 'string', 'length' => 15, 'null' => true, 'default' => NULL),
+		
+			// Order Information
+			'invoice_num' => array('type' => 'string', 'length' => 20, 'null' => true, 'default' => NULL),
+			'description' => array('type' => 'string', 'length' => 255, 'null' => true, 'default' => NULL),
 	
+			// Itemized Order Information
+			'line_item' => array('type' => 'text', 'null' => true, 'default' => NULL),
+			
+			// Customer Information
+			'first_name' => array('type' => 'string', 'length' => 50, 'null' => true, 'default' => NULL),
+			'last_name' => array('type' => 'string', 'length' => 50, 'null' => true, 'default' => NULL),
+			'company' => array('type' => 'string', 'length' => 50, 'null' => true, 'default' => NULL),
+			'address' => array('type' => 'string', 'length' => 60, 'null' => true, 'default' => NULL),
+			'city' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'state' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'zip' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'country' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'phone' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'fax' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'email' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'cust_id' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'customer_ip' => array('type' => 'string', 'null' => true, 'default' => NULL),
+		
+			// Shipping Information
+			'ship_to_first_name' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'ship_to_last_name' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'ship_to_company' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'ship_to_address' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'ship_to_city' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'ship_to_state' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'ship_to_zip' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'ship_to_country' => array('type' => 'string', 'null' => true, 'default' => NULL),
+		
+			// Additional Shipping Information (Level 2 Data)
+			'tax' => array('type' => 'text', 'null' => true, 'default' => NULL),
+			'freight' => array('type' => 'text', 'null' => true, 'default' => NULL),
+			'duty' => array('type' => 'text', 'null' => true, 'default' => NULL),
+			'tax_exempt' => array('type' => 'boolean', 'null' => true, 'default' => NULL),
+			'po_num' => array('type' => 'string', 'length' => 25, 'null' => true, 'default' => NULL),
+		
+			// Cardholder Authentication
+			'authentication_indicator' => array('type' => 'string', 'null' => true, 'default' => NULL),
+			'cardholder_authentication_value' => array('type' => '', 'null' => true, 'default' => NULL),
+		),
+	);
+
 	//public $cacheSources = false;
 	
 /**
@@ -332,6 +403,10 @@ class AuthnetSource extends DataSource {
 		}
 
 		return $this->__parseResponse($Model, $response);		
+	}
+	
+	public function describe(&$model) {
+		return $this->_schema['authnet_transactions'];
 	}
 }
 
