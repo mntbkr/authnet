@@ -321,8 +321,10 @@ class AuthnetSource extends DataSource {
 		
 		$response = $this->Http->post($url, $data, true);
 
-		if ($this->Http->response['status']['code'] != 100) {
-			// Bad response -- Could not connect to authorize.net... bad credentials?
+		if ($this->Http->response['status']['code'] != 200) {
+			// There was a problem connecting to the payment gateway, the
+			// transaction should not proceed
+			$Model->invalidate('transaction', 'Unable to connect to payment gateway.');
 			return false;
 		}
 
