@@ -78,9 +78,6 @@ class AuthnetTransaction extends AuthnetAppModel {
 		} else {
 			return false;
 		}
-	
-	public function beforeSave() {
-		return true;
 	}
 	
 	public function notExpired($check) {
