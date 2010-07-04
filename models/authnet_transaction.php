@@ -9,6 +9,14 @@ class AuthnetTransaction extends AuthnetAppModel {
 	public $displayField = 'trans_id';
 	
 	public $validate = array(
+		'trans_id' => array(
+			'numeric' => array(
+				'rule' => 'numeric',
+				'message' => 'Invalid transaction id.',
+				'required' => false,
+				'allowEmpty' => true
+			)
+		),
 		'amount' => array(
 			'numeric' => array(
 				'rule' => 'numeric',
@@ -27,10 +35,11 @@ class AuthnetTransaction extends AuthnetAppModel {
 		),
 		'exp_date' => array(
 			'mmyyyy' => array(
-				'rule' => array('mmyyyy', 'expiration'),
+				'rule' => array('mmyyyy'),
 				'message' => 'Invalid expiration date.',
 				'required' => false,
-				'allowEmpty' => true
+				'allowEmpty' => true,
+				'last' => true,
 			),
 			'notExpired' => array(
 				'rule' => array('notExpired', 'expiration'),
@@ -46,15 +55,32 @@ class AuthnetTransaction extends AuthnetAppModel {
 		return true;
 	}
 	
-	public function mmyyyy($data) {
-		$value = array_values($data);
-		//return preg_match('^[0-9]+$');
-		return true;
+	public function notExpired($check) {
+		$value = array_pop($check);
+		if (preg_match('/\d{6}/', $value)) {
+			$month = substr($value, 0,2);
+			$year = substr($value, 2);
+			
+			if ($year > date('Y')) {
+				return true;
+			} elseif ($year = date('Y')) {
+				if ($month >= date('m')) {
+					return true; 
+				}
+			}
+		}
 	}
 	
-	public function notExpired($data) {
-		// do something
-		return true;
+	public function mmyyyy($check) {
+		$value = array_pop($check);
+		if (preg_match('/\d{6}/', $value)) {
+			$month = substr($value, 0,2);
+			$year = substr($value, 2);
+			
+			if ($month >= 1 && $month <= 12 && $year >= 1900 && $year <= date('Y')+100) { 
+				return true;
+			}
+		}
 	}
 	
 	public function exists() {
