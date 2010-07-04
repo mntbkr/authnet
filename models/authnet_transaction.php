@@ -50,6 +50,34 @@ class AuthnetTransaction extends AuthnetAppModel {
 		)
 		
 	);
+
+/**
+ * Authorize a payment and return the data array
+ */
+	public function authorizePayment($data) {
+		$data['transaction_type'] = 'AUTH_ONLY';
+		if ($result = $this->save($data)) {
+			return $result;
+		} else {
+			return false;
+		}
+	}
+
+/**
+ * Capture a previously authorized payment
+ */
+	public function capturePayment($data) {
+		// All we need is the transaction id, type, and amount
+		$data = array(
+			'trans_id'			=> $data['trans_id'],
+			'transaction_type'	=> 'PRIOR_AUTH_CAPTURE',
+			'amount'			=> $data['amount'],
+		);
+		if ($result = $this->save($data)) {
+			return $result;
+		} else {
+			return false;
+		}
 	
 	public function beforeSave() {
 		return true;
