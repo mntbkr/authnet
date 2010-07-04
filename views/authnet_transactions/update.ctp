@@ -1,8 +1,8 @@
 <?php
 	echo $form->create('AuthnetTransaction', array('action' => 'update'));
-		echo $form->input('AuthnetTransaction.transaction_id', array('label' => 'Transaction ID', 'type' => 'text'));
+		echo $form->input('AuthnetTransaction.trans_id', array('label' => 'Transaction ID', 'type' => 'text'));
 	echo $form->input('AuthnetTransaction.amount');
-	echo $form->input('AuthnetTransaction.card_number');
+	echo $form->input('AuthnetTransaction.card_num');
 	echo $form->end('Save');
 ?>
 <h2>Notes</h2>
