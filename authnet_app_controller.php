@@ -4,4 +4,3 @@ class AuthnetAppController extends AppController {
 	
 }
 
-?>

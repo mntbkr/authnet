@@ -12,4 +12,3 @@ class DATABASE_CONFIG {
 
 }
 
-?>

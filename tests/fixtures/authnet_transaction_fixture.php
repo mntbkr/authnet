@@ -212,4 +212,3 @@ class AuthnetTransactionFixture extends CakeTestFixture {
 		)
 	);
 }
-?>

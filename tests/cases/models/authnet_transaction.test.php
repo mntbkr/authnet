@@ -9,4 +9,3 @@ Class AuthnetTransactionTestCase extends CakeTestCase {
 
 }
 
-?>

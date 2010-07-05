@@ -47,4 +47,3 @@ class AuthnetTransactionsController extends AuthnetAppController {
 
 }
 
-?>

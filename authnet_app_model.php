@@ -4,4 +4,3 @@ class AuthnetAppModel extends AppModel {
 	
 }
 
-?>
